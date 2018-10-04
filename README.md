@@ -55,7 +55,7 @@ This cookbook provides one resource and a corresponding provider.
 ## azure_file
 
 This resource is a wrapper around the core [`remote_file`](https://docs.chef.io/resource_remote_file.html)
-resource that will generate an expiring link for you to retrieve your file from protected blob storage.
+resource that will generate an expiring link (SAS token) if you pass `access_key` or MSI access token if you pass `msi_client_id` to retrieve your file from protected blob storage.
 
 Actions:
 
@@ -68,6 +68,7 @@ Attribute Parameters:
 
 * `storage_account` - the azure storage account you are accessing
 * `access_key` - the access key to this azure storage account
+* `msi_client_id` - the MSI client id with at least read permission to the storage account
 * `path` - where this file will be created on the machine
 * `remote_path` - the path of the file/key to pull including folder
 * `container` - the name of the azure blob storage container/bucket from where to pull
@@ -83,12 +84,24 @@ resource:
 * `inherits`
 * `rights`
 
-Example:
+Examples:
+
+### Using Azure Storage Account Access Keys
 
 ```ruby
 azure_file '/tmp/secret_file.jpg' do
   storage_account 'secretstorage'
   access_key 'eW91cmtleWluYmFzZTY0.....'
+  container 'images'
+  remote_path 'secret_file.jpg'
+end
+```
+
+### Using Azure Managed Service Identity (MSI)
+```ruby
+azure_file '/tmp/secret_file.jpg' do
+  storage_account 'secretstorage'
+  msi_client_id 'xxxxx-xxxx-xxxxx-xxxx-xxxxx'
   container 'images'
   remote_path 'secret_file.jpg'
 end

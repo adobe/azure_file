@@ -36,12 +36,23 @@ action :touch do
 end
 
 def do_protected_file(resource_action)
-  signed_remote_path = azure_signed_uri(new_resource.storage_account, new_resource.access_key,
-                                                    new_resource.container, new_resource.remote_path)
+  if new_resource.access_key.nil? and new_resource.msi_client_id.nil?
+    raise 'An error has occurred: Both MSI Client ID and Access Key of storage account are missing.'
+  elsif new_resource.msi_client_id.nil?
+    remote_path = azure_signed_uri(new_resource.storage_account, new_resource.access_key,
+                                     new_resource.container, new_resource.remote_path)
+  else
+    msi_access_token = msi_get_access_token(new_resource.msi_client_id)
+    headers = {"x-ms-version" => "2017-11-09", "Authorization" => "Bearer #{msi_access_token}"}
+    remote_path = source_path(new_resource.storage_account, new_resource.container, new_resource.remote_path)
+  end
 
   remote_file new_resource.name do
     path new_resource.path
-    source signed_remote_path
+    source remote_path
+    unless new_resource.msi_client_id.nil?
+      headers headers
+    end
     owner new_resource.owner
     group new_resource.group
     mode new_resource.mode
