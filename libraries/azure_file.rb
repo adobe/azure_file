@@ -12,14 +12,18 @@
 # governing permissions and limitations under the License.
 #
 
+def source_path(storage_account, container, remote_path)
+  # This is done to follow the similar pattern to s3_file cookbook of bucket and remote_path as key to pull.
+  source_path = "https://#{storage_account}.blob.core.windows.net/#{container}/#{remote_path}"
+end
+
 def azure_signed_uri(storage_account, access_key, container, remote_path)
   require 'azure/storage/common'
 
   # Creating an instance of `Azure::Storage::Common::Core::Auth::SharedAccessSignature`
   sas = Azure::Storage::Common::Core::Auth::SharedAccessSignature.new(storage_account, access_key)
 
-  # This is done to follow the similar pattern to s3_file cookbook of bucket and remote_path as key to pull.
-  complete_remote_path = "https://#{storage_account}.blob.core.windows.net/#{container}/#{remote_path}"
+  complete_remote_path = source_path(storage_account, container, remote_path)
   parsed_remote_path = URI.parse(complete_remote_path)
 
   # Generate signed URI to download the file.
